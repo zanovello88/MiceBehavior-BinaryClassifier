@@ -38,34 +38,45 @@ Flusso dati:
 
 import torch
 import torch.nn as nn
+from pathlib import Path
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
-
 
 class CNNEncoder(nn.Module):
     """
     Wrapper attorno a MobileNetV3-Small che carica i pesi da file locale
     invece che da internet — necessario su cluster HPC senza accesso alla rete.
-    Se weights_path è None inizializza la rete senza pesi pre-addestrati
-    (utile solo per test rapidi).
+    I pesi vengono caricati PRIMA del congelamento dei layer, nell'ordine
+    corretto: inizializza → carica pesi → congela layer → pronto.
     """
 
     def __init__(self, freeze_layers: int = 10,
                  weights_path: str = None):
         super().__init__()
 
-        backbone = mobilenet_v3_small(weights=None)  # nessun download
+        # inizializza senza scaricare nulla da internet
+        backbone = mobilenet_v3_small(weights=None)
 
-        if weights_path is not None:
-            state_dict = torch.load(weights_path, map_location='cpu')
+        # carica i pesi dal file locale — deve avvenire PRIMA
+        # di estrarre features e avgpool, altrimenti i sottomoduli
+        # vengono copiati prima che i pesi vengano applicati al backbone
+        if weights_path is not None and Path(weights_path).exists():
+            state_dict = torch.load(
+                weights_path,
+                map_location = 'cpu',
+                weights_only = True,    # elimina il FutureWarning
+            )
             backbone.load_state_dict(state_dict)
             print(f"Pesi caricati da: {weights_path}")
         else:
-            print("ATTENZIONE: CNN inizializzata senza pesi pre-addestrati")
+            print(f"ATTENZIONE: pesi non trovati in '{weights_path}' — "
+                  f"CNN inizializzata senza pre-training")
 
+        # estrai le parti del backbone DOPO aver caricato i pesi
         self.features = backbone.features
         self.avgpool  = backbone.avgpool
         self.feat_dim = 576
 
+        # congela i primi layer — feature di basso livello universali
         children = list(self.features.children())
         for layer in children[:freeze_layers]:
             for param in layer.parameters():
