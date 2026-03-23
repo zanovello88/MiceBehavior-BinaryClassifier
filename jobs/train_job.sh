@@ -36,6 +36,7 @@ python src/train.py \
   --num_workers   4 \
   --seq_len       30 \
   --stride        15 \
-  --freeze_layers 10
+  --freeze_layers 10 \
+  --weights_path  model_weights/mobilenet_v3_small_imagenet.pth
 
 echo "End: $(date)"

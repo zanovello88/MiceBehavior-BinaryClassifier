@@ -18,6 +18,8 @@ Motivazioni delle scelte:
     quello con la loss di validazione più bassa, non l'ultimo.
   - Logging su file + console: sul cluster non hai una sessione interattiva,
     quindi tutto deve essere scritto su file per poterlo leggere dopo.
+  - weights_path: i pesi di MobileNetV3 vengono caricati da file locale
+    invece che da internet — necessario su cluster HPC senza accesso alla rete.
 """
 
 import json
@@ -38,25 +40,26 @@ from dataset    import build_sequences, split_sequences, EpilepsyDataset, build_
 from model      import CNNLSTM, count_parameters
 from transforms import train_transforms, eval_transforms
 
+
 # Argomenti da riga di comando 
-# Tutti i parametri sono configurabili da CLI così puoi lanciare esperimenti
-# diversi sul cluster senza modificare il codice.
 
 def parse_args():
     p = argparse.ArgumentParser(description='Training CNN+LSTM epilessia')
-    p.add_argument('--manifest',     type=str, default='data/manifest.json')
-    p.add_argument('--output_dir',   type=str, default='runs')
-    p.add_argument('--epochs',       type=int,   default=50)
-    p.add_argument('--batch_size',   type=int,   default=8)
-    p.add_argument('--lr',           type=float, default=1e-4)
-    p.add_argument('--weight_decay', type=float, default=1e-4)
-    p.add_argument('--pos_weight',   type=float, default=0.4265)
-    p.add_argument('--patience',     type=int,   default=10)
-    p.add_argument('--num_workers',  type=int,   default=4)
-    p.add_argument('--seq_len',      type=int,   default=30)
-    p.add_argument('--stride',       type=int,   default=15)
-    p.add_argument('--freeze_layers',type=int,   default=10)
-    p.add_argument('--seed',         type=int,   default=42)
+    p.add_argument('--manifest',      type=str,   default='data/manifest.json')
+    p.add_argument('--output_dir',    type=str,   default='runs')
+    p.add_argument('--epochs',        type=int,   default=50)
+    p.add_argument('--batch_size',    type=int,   default=8)
+    p.add_argument('--lr',            type=float, default=1e-4)
+    p.add_argument('--weight_decay',  type=float, default=1e-4)
+    p.add_argument('--pos_weight',    type=float, default=0.4265)
+    p.add_argument('--patience',      type=int,   default=10)
+    p.add_argument('--num_workers',   type=int,   default=4)
+    p.add_argument('--seq_len',       type=int,   default=30)
+    p.add_argument('--stride',        type=int,   default=15)
+    p.add_argument('--freeze_layers', type=int,   default=10)
+    p.add_argument('--seed',          type=int,   default=42)
+    p.add_argument('--weights_path',  type=str,
+                   default='model_weights/mobilenet_v3_small_imagenet.pth')
     return p.parse_args()
 
 
@@ -76,12 +79,10 @@ def setup_logging(output_dir: Path) -> logging.Logger:
     fmt = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s',
                             datefmt='%H:%M:%S')
 
-    # handler file
     fh = logging.FileHandler(log_path)
     fh.setFormatter(fmt)
     logger.addHandler(fh)
 
-    # handler console
     ch = logging.StreamHandler()
     ch.setFormatter(fmt)
     logger.addHandler(ch)
@@ -102,15 +103,14 @@ def train_one_epoch(model, loader, optimizer, criterion, device, grad_clip=1.0):
     total_loss, correct, total = 0.0, 0, 0
 
     for frames, labels in loader:
-        frames = frames.to(device, non_blocking=True)   # [B, T, C, H, W]
-        labels = labels.to(device, non_blocking=True)   # [B]
+        frames = frames.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
 
         optimizer.zero_grad()
-        logits = model(frames).squeeze(1)               # [B]
+        logits = model(frames).squeeze(1)
         loss   = criterion(logits, labels)
         loss.backward()
 
-        # gradient clipping — fondamentale per LSTM
         nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
 
         optimizer.step()
@@ -154,10 +154,10 @@ def evaluate(model, loader, criterion, device):
     return total_loss / total, correct / total, all_probs, all_labels
 
 
-# Main
+# Main 
 
 def main():
-    args   = parse_args()
+    args = parse_args()
 
     # cartella di output con timestamp — ogni run ha la sua cartella
     run_id     = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -167,13 +167,13 @@ def main():
     # riproducibilità
     torch.manual_seed(args.seed)
 
-    # device — su cluster con GPU sarà automaticamente 'cuda'
+    # device 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     log.info(f"Device: {device}")
     log.info(f"Run ID: {run_id}")
     log.info(f"Args: {vars(args)}")
 
-    # DataLoader 
+    # DataLoader
     log.info("Caricamento dataset...")
     train_loader, val_loader, test_loader = build_dataloaders(
         manifest_path   = Path(args.manifest),
@@ -189,15 +189,22 @@ def main():
              f"Test: {len(test_loader.dataset):,} seq")
 
     # Modello 
-    model = CNNLSTM(freeze_layers=args.freeze_layers).to(device)
-    log.info("Architettura:")
+    # weights_path punta al file .pth scaricato sul Mac e trasferito sul cluster
+    # in questo modo evitiamo qualsiasi download da internet durante il job
+    log.info(f"Caricamento pesi CNN da: {args.weights_path}")
+    model = CNNLSTM(
+        freeze_layers = args.freeze_layers,
+        weights_path  = args.weights_path,
+    ).to(device)
+
+    log.info("Architettura — parametri:")
     count_parameters(model)
 
     # Loss, ottimizzatore, scheduler 
     pos_weight = torch.tensor([args.pos_weight], device=device)
     criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    optimizer  = AdamW(
+    optimizer = AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr           = args.lr,
         weight_decay = args.weight_decay,
@@ -208,9 +215,9 @@ def main():
     )
 
     # Training loop 
-    best_val_loss  = float('inf')
-    epochs_no_imp  = 0
-    history        = []
+    best_val_loss = float('inf')
+    epochs_no_imp = 0
+    history       = []
 
     log.info("Inizio training...")
     log.info(f"{'Epoca':>5} | {'TrainLoss':>9} | {'TrainAcc':>8} | "
@@ -263,7 +270,7 @@ def main():
                          f"(nessun miglioramento per {args.patience} epoche)")
                 break
 
-    # Salva history 
+    # Salva history
     with open(output_dir / 'history.json', 'w') as f:
         json.dump(history, f, indent=2)
 

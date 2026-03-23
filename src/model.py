@@ -43,42 +43,39 @@ from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 
 class CNNEncoder(nn.Module):
     """
-    Wrapper attorno a MobileNetV3-Small che:
-      - carica i pesi ImageNet pre-addestrati
-      - rimuove il classifier finale
-      - congela i primi N layer (feature universali)
-      - espone il metodo forward che restituisce [B, 576]
-
-    Il congelamento parziale è una strategia di fine-tuning standard:
-    i primi layer della CNN imparano feature generiche (bordi, texture)
-    che sono utili per qualsiasi dominio; congelarli riduce il numero di
-    parametri ottimizzabili e accelera la convergenza.
+    Wrapper attorno a MobileNetV3-Small che carica i pesi da file locale
+    invece che da internet — necessario su cluster HPC senza accesso alla rete.
+    Se weights_path è None inizializza la rete senza pesi pre-addestrati
+    (utile solo per test rapidi).
     """
 
-    def __init__(self, freeze_layers: int = 10):
+    def __init__(self, freeze_layers: int = 10,
+                 weights_path: str = None):
         super().__init__()
 
-        backbone = mobilenet_v3_small(weights=MobileNet_V3_Small_Weights.IMAGENET1K_V1)
+        backbone = mobilenet_v3_small(weights=None)  # nessun download
 
-        # rimuove il classifier: teniamo solo il feature extractor
-        # output shape dopo avgpool: [B, 576, 1, 1] → flatten → [B, 576]
-        self.features  = backbone.features
-        self.avgpool   = backbone.avgpool
-        self.feat_dim  = 576
+        if weights_path is not None:
+            state_dict = torch.load(weights_path, map_location='cpu')
+            backbone.load_state_dict(state_dict)
+            print(f"Pesi caricati da: {weights_path}")
+        else:
+            print("ATTENZIONE: CNN inizializzata senza pesi pre-addestrati")
 
-        # congela i primi `freeze_layers` layer del feature extractor
+        self.features = backbone.features
+        self.avgpool  = backbone.avgpool
+        self.feat_dim = 576
+
         children = list(self.features.children())
         for layer in children[:freeze_layers]:
             for param in layer.parameters():
                 param.requires_grad = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """x: [B, C, H, W] → output: [B, 576]"""
-        x = self.features(x)           # [B, 576, 7, 7] circa
-        x = self.avgpool(x)            # [B, 576, 1, 1]
-        x = torch.flatten(x, 1)        # [B, 576]
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
         return x
-
 
 class CNNLSTM(nn.Module):
     """
@@ -94,14 +91,19 @@ class CNNLSTM(nn.Module):
     """
 
     def __init__(self,
-                 cnn_feat_dim : int   = 576,
-                 proj_dim     : int   = 256,
-                 lstm_hidden  : int   = 256,
-                 lstm_layers  : int   = 2,
-                 lstm_dropout : float = 0.3,
-                 fc_dropout   : float = 0.5,
-                 freeze_layers: int   = 10):
+             cnn_feat_dim  : int   = 576,
+             proj_dim      : int   = 256,
+             lstm_hidden   : int   = 256,
+             lstm_layers   : int   = 2,
+             lstm_dropout  : float = 0.3,
+             fc_dropout    : float = 0.5,
+             freeze_layers : int   = 10,
+             weights_path  : str   = None):   # ← aggiunto
         super().__init__()
+        self.cnn = CNNEncoder(
+            freeze_layers=freeze_layers,
+            weights_path=weights_path       # ← passato all'encoder
+        )
 
         #1. CNN encoder
         self.cnn = CNNEncoder(freeze_layers=freeze_layers)
