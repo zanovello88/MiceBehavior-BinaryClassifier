@@ -37,8 +37,8 @@ Flusso dati:
 """
 
 import torch
-import torch.nn as nn
 from pathlib import Path
+import torch.nn as nn
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 
 class CNNEncoder(nn.Module):
@@ -107,17 +107,14 @@ class CNNLSTM(nn.Module):
              lstm_hidden   : int   = 256,
              lstm_layers   : int   = 2,
              lstm_dropout  : float = 0.3,
-             fc_dropout    : float = 0.5,
+             fc_dropout    : float = 0.6, #aumento per l'overfitting dopo il primo training
              freeze_layers : int   = 10,
              weights_path  : str   = None):   # ← aggiunto
         super().__init__()
-        self.cnn = CNNEncoder(
+        self.cnn = CNNEncoder(#1. CNN encoder
             freeze_layers=freeze_layers,
             weights_path=weights_path       # ← passato all'encoder
         )
-
-        #1. CNN encoder
-        self.cnn = CNNEncoder(freeze_layers=freeze_layers)
 
         #2. Proiezione lineare CNN → LSTM
         self.projection = nn.Sequential(

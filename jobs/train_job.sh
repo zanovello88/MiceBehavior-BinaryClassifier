@@ -9,7 +9,6 @@
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:GH100:1
 
-#Ambiente 
 echo "Job ID:  $SLURM_JOB_ID"
 echo "Node:    $SLURM_NODELIST"
 echo "Start:   $(date)"
@@ -23,20 +22,19 @@ source ~/tesi/venv_tesi/bin/activate
 cd ~/tesi
 mkdir -p runs
 
-#Training 
 python src/train.py \
   --manifest      data/manifest.json \
   --output_dir    runs \
-  --epochs        50 \
-  --batch_size    32 \
-  --lr            1e-4 \
-  --weight_decay  1e-4 \
+  --epochs        80 \
+  --batch_size    16 \
+  --lr            1e-5 \
+  --weight_decay  1e-3 \
   --pos_weight    0.4265 \
-  --patience      10 \
+  --patience      15 \
   --num_workers   4 \
   --seq_len       30 \
   --stride        15 \
-  --freeze_layers 10 \
+  --freeze_layers 14 \
   --weights_path  model_weights/mobilenet_v3_small_imagenet.pth
 
 echo "End: $(date)"
