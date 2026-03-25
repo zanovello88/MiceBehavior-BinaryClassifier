@@ -73,8 +73,9 @@ def build_sequences(manifest: List[dict],
                 'seq_label'   : center_label,
                 'video_name'  : video_name,
                 'start_idx'   : frames[start]['sampled_frame_idx'],
+                'onset_frame' : frames[0]['onset_frame'],
+                'offset_frame': frames[0]['offset_frame'],
             })
-
     return sequences
 
 
