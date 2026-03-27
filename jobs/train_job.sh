@@ -27,14 +27,14 @@ python src/train.py \
   --output_dir    runs \
   --epochs        80 \
   --batch_size    16 \
-  --lr            1e-5 \
+  --lr            3e-5 \
   --weight_decay  1e-3 \
-  --pos_weight    0.4265 \
+  --pos_weight    3.0 \
   --patience      15 \
   --num_workers   4 \
-  --seq_len       30 \
+  --seq_len       60 \
   --stride        15 \
-  --freeze_layers 14 \
+  --freeze_layers 8 \
   --weights_path  model_weights/mobilenet_v3_small_imagenet.pth
 
 echo "End: $(date)"
