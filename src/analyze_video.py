@@ -1,6 +1,4 @@
 """
-analyze_video.py
-================
 Scopo: interfaccia per informatici che permette di analizzare un video
        con più topi, selezionare manualmente il topo di interesse tramite
        click-and-drag, eseguire l'inferenza CNN+LSTM e salvare i timestamp
@@ -41,7 +39,7 @@ DEFAULT_CHECKPOINT = 'runs/20260327_101301/best_model.pt'
 DEFAULT_WEIGHTS    = 'model_weights/mobilenet_v3_small_imagenet.pth'
 
 
-# ── Argomenti CLI ──────────────────────────────────────────────────────────────
+# Argomenti CLI
 
 def parse_args():
     p = argparse.ArgumentParser(
@@ -102,7 +100,7 @@ def parse_args():
     return p.parse_args()
 
 
-# ── Selezione ROI ──────────────────────────────────────────────────────────────
+# Selezione ROI
 
 class ROISelector:
     """
@@ -207,7 +205,7 @@ class ROISelector:
                 return None
 
 
-# ── Inferenza ottimizzata ──────────────────────────────────────────────────────
+# Inferenza ottimizzata 
 
 def run_inference_cpu(cap, roi, model, args):
     """
@@ -415,7 +413,7 @@ def filter_events(events, min_duration_sec, min_gap_sec):
 
     return filtered
 
-# ── Salva CSV ──────────────────────────────────────────────────────────────────
+# Salva CSV
 
 def save_csv(video_path, events, roi, output_csv):
     """
@@ -482,7 +480,7 @@ def save_csv(video_path, events, roi, output_csv):
             print("  Nessuna crisi rilevata")
 
 
-# ── Salva plot ─────────────────────────────────────────────────────────────────
+# Salva plot
 
 def save_plot(all_frames, all_probs, events, orig_fps,
               threshold, video_path, output_dir):
@@ -521,7 +519,7 @@ def save_plot(all_frames, all_probs, events, orig_fps,
     print(f"Plot salvato in: {plot_path}")
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# Main 
 
 def main():
     args = parse_args()
@@ -536,7 +534,7 @@ def main():
     video_dir  = Path(args.video).parent
     output_csv = args.output_csv or str(video_dir / 'risultati_crisi.csv')
 
-    # ── Carica modello ─────────────────────────────────────────────────────────
+    # Carica modello
     print("Caricamento modello...")
     checkpoint = torch.load(args.checkpoint, map_location='cpu',
                             weights_only=False)
@@ -548,7 +546,7 @@ def main():
     model.eval()
     print("Modello caricato.\n")
 
-    # ── Leggi primo frame ──────────────────────────────────────────────────────
+    # Leggi primo frame
     cap = cv2.VideoCapture(args.video)
     if not cap.isOpened():
         print(f"ERRORE: impossibile aprire: {args.video}")
@@ -566,7 +564,7 @@ def main():
     print(f"Tempo stimato analisi: "
           f"~{total_s * 0.65:.0f}s su CPU\n")   # stima empirica
 
-    # ── Selezione ROI ──────────────────────────────────────────────────────────
+    # Selezione ROI
     selector = ROISelector(first_frame)
     roi      = selector.select()
 
@@ -575,7 +573,7 @@ def main():
         cap.release()
         sys.exit(0)
 
-    # ── Anteprima ritaglio ─────────────────────────────────────────────────────
+    # Anteprima ritaglio
     x, y, w, h = roi
     preview    = cv2.resize(first_frame[y:y+h, x:x+w],
                             (CROP_SIZE, CROP_SIZE))
@@ -585,7 +583,7 @@ def main():
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    # ── Inferenza ──────────────────────────────────────────────────────────────
+    # Inferenza
     import time
     t_start = time.time()
 
@@ -599,7 +597,7 @@ def main():
           f"({elapsed/total_s:.2f}x tempo reale)")
 
 
-    # ── Filtra eventi ──────────────────────────────────────────────────────────
+    # Filtra eventi
     print("\nFiltro eventi...")
     events_filtered = filter_events(
         events,
@@ -609,7 +607,7 @@ def main():
     print(f"Crisi dopo filtro: {len([e for e in events_filtered if e['type']=='onset'])}"
         f" (erano {len([e for e in events if e['type']=='onset'])})")
     
-    # ── Report ─────────────────────────────────────────────────────────────────
+    # Report
     print("\n" + "=" * 50)
     onsets  = [e for e in events if e['type'] == 'onset']
     offsets = [e for e in events if e['type'] == 'offset']
@@ -624,7 +622,7 @@ def main():
                   f"{round(off['time_sec']-onset['time_sec'],2)}s")
     print("=" * 50)
 
-    # ── Salva output ───────────────────────────────────────────────────────────
+    # Salva output
     save_csv(args.video, events_filtered, roi, output_csv)
     save_plot(all_frames, all_probs, events_filtered, fps,
           args.threshold, args.video, video_dir)
