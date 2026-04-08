@@ -1,0 +1,44 @@
+============================================================
+ERROR ANALYSIS REPORT
+Modello: runs/20260327_101301/best_model.pt
+Data: 2026-04-08 15:03
+============================================================
+
+1. DISTRIBUZIONE ERRORI
+   Sequenze totali : 681
+   TP :  503  (73.9%)
+   TN :   30  (4.4%)
+   FP :  113  (16.6%)
+   FN :   35  (5.1%)
+   Precision : 0.8166
+   Recall    : 0.9349
+   F1-score  : 0.8718
+
+2. VIDEO PIÙ DIFFICILI (top 5 per errori totali)
+   riga51_A1                 FP=  5 FN= 12 F1=0.832
+   riga76_78                 FP=  5 FN=  9 F1=0.829
+   riga3_P95                 FP=  5 FN=  6 F1=0.784
+   riga2_P95                 FP= 10 FN=  0 F1=0.875
+   riga53_A1                 FP= 10 FN=  0 F1=0.872
+
+3. VIDEO CON F1 PIÙ BASSO (top 5)
+   riga3_P95                 F1=0.784 (FP=5 FN=6)
+   riga76_78                 F1=0.829 (FP=5 FN=9)
+   riga51_A1                 F1=0.832 (FP=5 FN=12)
+   riga72_78                 F1=0.839 (FP=4 FN=6)
+   riga96_81                 F1=0.842 (FP=9 FN=0)
+
+4. POSSIBILI CAUSE DEGLI ERRORI
+   - FP: movimenti pre-ictali simili alla crisi nei primi secondi
+   - FN: crisi con pattern atipici o onset/offset graduali
+   - Variabilità inter-individuale tra topi di razze diverse
+   - Dataset limitato (100 video) — generalizzazione parziale
+
+5. STRATEGIE DI MIGLIORAMENTO
+   - Raccogliere più video per topi con F1 basso
+   - Aumentare il dataset con video da altri laboratori
+   - Validazione leave-one-mouse-out per misurare
+     la generalizzazione inter-individuale
+   - Attention mechanism sull'LSTM per pesare
+     dinamicamente i timestep più informativi
+============================================================

@@ -75,6 +75,7 @@ def build_sequences(manifest: List[dict],
                 'start_idx'   : frames[start]['sampled_frame_idx'],
                 'onset_frame' : frames[0]['onset_frame'],
                 'offset_frame': frames[0]['offset_frame'],
+                'mouse_name'  : frames[0]['mouse_name'],  
             })
     return sequences
 
