@@ -131,6 +131,7 @@ Input [B, T, C, H, W]
 ├── inference_results/                # Output dell'inferenza da CLI (escluso da git)
 ├── requirements.txt                  # Dipendenze del progetto
 └── README.md                         # Documentazione principale del progetto 
+```
 
 --- 
 
