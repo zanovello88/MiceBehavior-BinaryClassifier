@@ -79,37 +79,40 @@ Input [B, T, C, H, W]
 
 ---
 
-## Struttura del progetto
+## Struttura del Progetto
+
+```text
+.
 ├── data/
-│   ├── mappa_labels.csv              # annotazioni (onset/offset per video)
-│   ├── manifest.json                 # generato da preprocessing.py
-│   └── frames/                       # frame estratti (non in git)
+│   ├── mappa_labels.csv              # Annotazioni (onset/offset per video)
+│   ├── manifest.json                 # Generato da preprocessing.py
+│   └── frames/                       # Frame estratti (escluso da git)
 │
 ├── src/
-│   ├── creazione_dataset.py          # ritaglio video sul topo
-│   ├── preprocessing.py              # estrazione frame + manifest JSON
-│   ├── transforms.py                 # augmentation e normalizzazione
-│   ├── dataset.py                    # Dataset PyTorch + sliding window
-│   ├── model.py                      # architettura CNN+LSTM
-│   ├── train.py                      # training loop con early stopping
-│   ├── evaluate.py                   # metriche + smoothing + plot
-│   ├── inference.py                  # inferenza real-time da CLI
-│   ├── analyze_video.py              # analisi video da CLI con ROI
-│   └── gui.py                        # interfaccia grafica Tkinter
+│   ├── creazione_dataset.py          # Ritaglio video focalizzato sul topo
+│   ├── preprocessing.py              # Estrazione frame + generazione manifest JSON
+│   ├── transforms.py                 # Data augmentation e normalizzazione
+│   ├── dataset.py                    # Dataset PyTorch con logica sliding window
+│   ├── model.py                      # Architettura del modello (es. CNN+LSTM)
+│   ├── train.py                      # Training loop con supporto Early Stopping
+│   ├── evaluate.py                   # Calcolo metriche, smoothing e plot risultati
+│   ├── inference.py                  # Script per inferenza real-time da CLI
+│   ├── analyze_video.py              # Analisi video completa con gestione ROI
+│   └── gui.py                        # Interfaccia grafica (Tkinter)
 │
 ├── tools/
-│   ├── inspect_manifest.py           # verifica distribuzione classi
-│   ├── inspect_dataset.py            # verifica split e shape tensori
-│   ├── plot_thesis.py                # grafici comparativi per la tesi
-│   └── error_analysis.py             # analisi FP/FN per video e topo
+│   ├── inspect_manifest.py           # Verifica bilanciamento e distribuzione classi
+│   ├── inspect_dataset.py            # Debug di split (train/val) e shape dei tensori
+│   ├── plot_thesis.py                # Generazione grafici comparativi per la tesi
+│   └── error_analysis.py             # Analisi approfondita FP/FN per video e soggetto
 │
 ├── jobs/
-│   └── train_job.sh                  # script SLURM per il cluster
+│   └── train_job.sh                  # Script di sottomissione SLURM per il cluster
 │
 ├── model_weights/
-│   └── mobilenet_v3_small_imagenet.pth   # pesi pre-addestrati (non in git)
+│   └── mobilenet_v3_small_imagenet.pth   # Pesi pre-addestrati (escluso da git)
 │
-├── runs/                             # output training (non in git)
+├── runs/                             # Log e checkpoint dei training (escluso da git)
 │   └── <run_id>/
 │       ├── best_model.pt
 │       ├── history.json
@@ -117,19 +120,17 @@ Input [B, T, C, H, W]
 │       ├── eval_results.json
 │       └── eval_results_smoothed.json
 │
-├── error_analysis/                   # output error analysis (non in git)
+├── error_analysis/                   # Output analisi errori (escluso da git)
 │   ├── errors_per_video.png
 │   ├── errors_per_mouse.png
 │   ├── fn_position_in_crisis.png
 │   ├── probability_distribution.png
 │   └── error_report.txt
 │
-├── thesis_plots/                     # grafici per la tesi (non in git)
-├── inference_results/                # output inferenza CLI (non in git)
-├── requirements.txt
-└── README.md
-
----
+├── thesis_plots/                     # Grafici finali per la tesi (escluso da git)
+├── inference_results/                # Output dell'inferenza da CLI (escluso da git)
+├── requirements.txt                  # Dipendenze del progetto
+└── README.md                         # Documentazione principale
 
 ## Installazione
 
