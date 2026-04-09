@@ -130,7 +130,7 @@ Input [B, T, C, H, W]
 ├── thesis_plots/                     # Grafici finali per la tesi (escluso da git)
 ├── inference_results/                # Output dell'inferenza da CLI (escluso da git)
 ├── requirements.txt                  # Dipendenze del progetto
-└── README.md                         # Documentazione principale
+└── README.md                         # Documentazione principale del progetto 
 
 --- 
 
