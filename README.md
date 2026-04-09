@@ -132,6 +132,8 @@ Input [B, T, C, H, W]
 ├── requirements.txt                  # Dipendenze del progetto
 └── README.md                         # Documentazione principale
 
+--- 
+
 ## Installazione
 
 ```bash
