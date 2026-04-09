@@ -16,7 +16,8 @@ scikit-learn>=1.3.0
 # Visualization
 matplotlib>=3.7.0
 
-# Utilities
-pathlib2>=2.3.7
+# GUI (Tkinter è incluso in Python — nessuna installazione necessaria)
+# Su Linux potrebbe servire: sudo apt-get install python3-tk
 
-echo "openpyxl>=3.1.0" >> requirements.txt
+# Export
+openpyxl>=3.1.0
