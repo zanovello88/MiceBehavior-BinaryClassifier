@@ -64,6 +64,46 @@ DEFAULT_WEIGHTS    = str(Path(__file__).parent.parent /
 PREVIEW_W          = 480
 PREVIEW_H          = 360
 
+class Tooltip:
+    """
+    Tooltip che appare al passaggio del mouse su un widget.
+    Mostra un testo descrittivo in una piccola finestra gialla.
+    """
+
+    def __init__(self, widget, text):
+        self.widget  = widget
+        self.text    = text
+        self.tooltip = None
+        widget.bind('<Enter>', self._show)
+        widget.bind('<Leave>', self._hide)
+
+    def _show(self, event=None):
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
+
+        self.tooltip = tk.Toplevel(self.widget)
+        self.tooltip.wm_overrideredirect(True)   # niente bordi finestra
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+
+        lbl = tk.Label(
+            self.tooltip,
+            text       = self.text,
+            justify    = 'left',
+            background = '#FFFACD',   # giallo chiaro
+            foreground = '#333333',
+            relief     = 'solid',
+            borderwidth= 1,
+            wraplength = 280,         # va a capo dopo 280px
+            font       = ('', 9),
+            padx       = 6,
+            pady       = 4,
+        )
+        lbl.pack()
+
+    def _hide(self, event=None):
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
 
 # Classe principale GUI
 
@@ -152,29 +192,77 @@ class EpilepsyGUI:
         params_frame = ttk.LabelFrame(right, text="Parametri analisi")
         params_frame.pack(fill='x', pady=(0, 6))
 
+        # parametri principali
         self._param_row(params_frame, "Min durata crisi (s):",
-                        self.var_min_duration, 0)
+            self.var_min_duration, 0,
+            "Durata minima in secondi perché una crisi venga considerata reale.\n"
+            "Tutti gli eventi più brevi vengono scartati automaticamente.\n"
+            "Le crisi epilettiche nei topi durano in genere 45-80 secondi.\n"
+            "➜ Abbassare se le crisi del topo sono più brevi del solito.")
+
         self._param_row(params_frame, "Skip inizio video (s):",
-                        self.var_skip_seconds, 1)
+            self.var_skip_seconds, 1,
+            "Secondi iniziali del video da ignorare durante l'analisi.\n"
+            "Serve ad evitare falsi allarmi: nei primi secondi il topo\n"
+            "si muove normalmente ma il modello può confondersi.\n"
+            "➜ Aumentare se compaiono falsi allarmi all'inizio del video.")
+
         self._param_row(params_frame, "Finestra confidenza (s):",
-                        self.var_conf_window, 2)
+            self.var_conf_window, 2,
+            "Finestra temporale (in secondi) usata per confermare una crisi.\n"
+            "Il modello richiede che per tutta questa finestra i segnali\n"
+            "di crisi siano presenti in modo continuativo, non isolato.\n"
+            "➜ Aumentare per essere più severi nel riconoscimento.")
+
         self._param_row(params_frame, "Ratio confidenza [0-1]:",
-                        self.var_conf_ratio, 3)
-        self._param_row(params_frame, "Conferma frames:",
-                        self.var_confirm, 4)
+            self.var_conf_ratio, 3,
+            "Percentuale minima di segnali positivi nella finestra di\n"
+            "confidenza per considerare l'evento come crisi reale.\n"
+            "Esempio: 0.85 significa che almeno l'85% dei segnali nella\n"
+            "finestra devono indicare crisi.\n"
+            "➜ Avvicinare a 1.0 per ridurre i falsi allarmi.")
+
+        self._param_row(params_frame, "Confirm frames:",
+            self.var_confirm, 4,
+            "Numero di rilevamenti consecutivi necessari prima di\n"
+            "dichiarare l'inizio di una crisi.\n"
+            "Ogni 'frame' corrisponde a circa 0.2 secondi di video.\n"
+            "Esempio: 12 frames = ~2.4 secondi consecutivi di segnale.\n"
+            "➜ Aumentare per evitare falsi allarmi da movimenti bruschi.")
+
         self._param_row(params_frame, "Threshold:",
-                        self.var_threshold, 5)
+            self.var_threshold, 5,
+            "Soglia di probabilità oltre la quale il modello considera\n"
+            "un momento come 'crisi'. Calcolata automaticamente durante\n"
+            "l'addestramento — modificare con cautela.\n"
+            "➜ Abbassare per rilevare più crisi (ma più falsi allarmi).\n"
+            "➜ Alzare per avere meno falsi allarmi (ma rischio di perdere crisi).")
 
         # parametri avanzati (collassabili)
         adv_frame = ttk.LabelFrame(right, text="Parametri avanzati")
         adv_frame.pack(fill='x', pady=(0, 6))
 
+        # parametri avanzati
         self._param_row(adv_frame, "Frame step (subsampling):",
-                        self.var_frame_step, 0)
+            self.var_frame_step, 0,
+            "Quanti fotogrammi saltare tra un'analisi e la successiva.\n"
+            "Con un video a 30fps e step=6, si analizzano 5 fotogrammi\n"
+            "al secondo. Valori più alti = analisi più veloce ma meno\n"
+            "precisa. Non modificare salvo necessità di velocità.")
+
         self._param_row(adv_frame, "Seq length:",
-                        self.var_seq_len, 1)
+            self.var_seq_len, 1,
+            "Quanti fotogrammi consecutivi il modello analizza insieme\n"
+            "per ogni predizione. Un valore più alto dà più contesto\n"
+            "temporale ma rallenta l'analisi su PC senza scheda grafica.\n"
+            "Non modificare salvo indicazione tecnica.")
+
         self._param_row(adv_frame, "Smooth window:",
-                        self.var_smooth_window, 2)
+            self.var_smooth_window, 2,
+            "Dimensione della 'media mobile' applicata ai risultati.\n"
+            "Smussa le fluttuazioni rapide evitando che un singolo\n"
+            "fotogramma anomalo influenzi il risultato finale.\n"
+            "Non modificare salvo indicazione tecnica.")
 
         # bottoni azione
         btn_frame = ttk.Frame(right)
@@ -247,14 +335,23 @@ class EpilepsyGUI:
                                        state='disabled')
         self.btn_open_dir.pack(side='left', padx=4)
 
-    def _param_row(self, parent, label, variable, row):
-        """Crea una riga label + entry per un parametro."""
+    def _param_row(self, parent, label, variable, row, help_text=None):
+        """
+        Crea una riga label + entry + icona informativa (se help_text fornito).
+        """
         ttk.Label(parent, text=label).grid(
             row=row, column=0, sticky='w', padx=6, pady=2
         )
         ttk.Entry(parent, textvariable=variable, width=8).grid(
             row=row, column=1, sticky='e', padx=6, pady=2
         )
+        if help_text:
+            info_lbl = tk.Label(
+                parent, text='ℹ', foreground='#1a73e8',
+                cursor='question_arrow', font=('', 10)
+            )
+            info_lbl.grid(row=row, column=2, padx=(2, 4), pady=2)
+            Tooltip(info_lbl, help_text)
 
     # Caricamento video e modello
 
