@@ -16,3 +16,10 @@ __pycache__/
 # checkpoint PyTorch
 *.pt
 *.pth
+
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+__pycache__/
+*.pyc

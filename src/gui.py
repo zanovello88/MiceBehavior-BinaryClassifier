@@ -55,12 +55,32 @@ sys.path.insert(0, str(SRC_DIR))
 from model      import CNNLSTM
 from transforms import eval_transforms
 
+def get_resource_path(relative_path):
+    """
+    Restituisce il path assoluto a una risorsa, compatibile sia con
+    l'esecuzione normale da terminale che con l'eseguibile PyInstaller.
+
+    PyInstaller estrae i file in una cartella temporanea (_MEIPASS)
+    durante l'esecuzione — questa funzione trova quella cartella
+    automaticamente. In modalità normale usa la cartella del progetto.
+    """
+    if hasattr(sys, '_MEIPASS'):
+        # modalità eseguibile PyInstaller
+        base_path = Path(sys._MEIPASS)
+    else:
+        # modalità sviluppo — cartella root del progetto
+        base_path = Path(__file__).parent.parent
+
+    return str(base_path / relative_path)
+
 # Costanti
 CROP_SIZE          = 210
-DEFAULT_CHECKPOINT = str(Path(__file__).parent.parent /
-                         'runs/20260327_101301/best_model.pt')
-DEFAULT_WEIGHTS    = str(Path(__file__).parent.parent /
-                         'model_weights/mobilenet_v3_small_imagenet.pth')
+DEFAULT_CHECKPOINT = get_resource_path(
+    'runs/20260327_101301/best_model.pt'
+)
+DEFAULT_WEIGHTS = get_resource_path(
+    'model_weights/mobilenet_v3_small_imagenet.pth'
+)
 PREVIEW_W          = 480
 PREVIEW_H          = 360
 
