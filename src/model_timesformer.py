@@ -55,7 +55,7 @@ class TimeSformerBinary(nn.Module):
                  weights_dir   : str   = 'model_weights/timesformer-hr',
                  freeze_layers : int   = 8,
                  hidden_size   : int   = 768,
-                 fc_dropout    : float = 0.5):
+                 fc_dropout    : float = 0.7):
         super().__init__()
 
         # ── Carica backbone da file locale ─────────────────────────────────────

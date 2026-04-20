@@ -29,13 +29,13 @@ python src/train_timesformer.py \
   --epochs        30 \
   --batch_size    4 \
   --lr            1e-5 \
-  --weight_decay  1e-2 \
+  --weight_decay  5e-2 \
   --pos_weight    3.0 \
   --patience      8 \
   --num_workers   4 \
   --seq_len       16 \
   --stride        8 \
-  --freeze_layers 8 \
+  --freeze_layers 11 \
   --warmup_epochs 3
 
 echo "End: $(date)"
