@@ -6,6 +6,7 @@ data/dataset_tagliato/
 
 # output training
 runs/
+runs_timesformer/
 
 # Python
 __pycache__/

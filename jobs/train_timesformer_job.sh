@@ -26,16 +26,17 @@ python src/train_timesformer.py \
   --manifest      data/manifest.json \
   --output_dir    runs_timesformer \
   --weights_dir   model_weights/timesformer-hr \
-  --epochs        30 \
+  --epochs        50 \
   --batch_size    4 \
-  --lr            1e-5 \
-  --weight_decay  5e-2 \
-  --pos_weight    3.0 \
-  --patience      8 \
+  --lr            5e-5 \
+  --weight_decay  1e-3 \
+  --pos_weight    5.0 \
+  --patience      10 \
   --num_workers   4 \
   --seq_len       16 \
   --stride        8 \
-  --freeze_layers 11 \
-  --warmup_epochs 3
+  --freeze_layers 12 \
+  --warmup_epochs 3 \
+  --fc_dropout 0.3 \
 
 echo "End: $(date)"

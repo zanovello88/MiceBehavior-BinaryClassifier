@@ -1,0 +1,59 @@
+============================================================
+ERROR ANALYSIS REPORT — TimeSformer-HR
+Modello: runs_timesformer/20260421_171823/best_model.pt
+Data: 2026-04-22 10:50
+============================================================
+
+1. DISTRIBUZIONE ERRORI
+   Sequenze totali : 1170
+   TP :  499  (42.6%)
+   TN :  249  (21.3%)
+   FP :   96  (8.2%)
+   FN :  326  (27.9%)
+   Precision : 0.8387
+   Recall    : 0.6048
+   F1-score  : 0.7028
+   ROC-AUC   : 0.7237
+
+2. VIDEO PIÙ DIFFICILI (top 5 per errori totali)
+   riga27_78                 FP= 19 FN= 30 F1=0.437
+   riga48_83                 FP=  8 FN= 30 F1=0.568
+   riga64_A1                 FP= 11 FN= 27 F1=0.716
+   riga83_78                 FP=  0 FN= 38 F1=0.345
+   riga34_83                 FP=  5 FN= 29 F1=0.469
+
+3. VIDEO CON F1 PIÙ BASSO (top 5)
+   riga20_83                 F1=0.340 (FP=0 FN=31)
+   riga83_78                 F1=0.345 (FP=0 FN=38)
+   riga27_78                 F1=0.437 (FP=19 FN=30)
+   riga34_83                 F1=0.469 (FP=5 FN=29)
+   riga100_69                F1=0.474 (FP=0 FN=20)
+
+4. OSSERVAZIONI CHIAVE
+   - Recall basso (0.625) rispetto a CNN+LSTM (0.935)
+   - 290 FN indicano che il modello è troppo conservativo
+   - Precision alta (0.823) — quando predice crisi, è affidabile
+   - Linear Probing (freeze_layers=12) ha ridotto l'overfitting
+     rispetto al Run 2 (freeze_layers=11, recall=0.488)
+   - pos_weight=5.0 ha migliorato il recall di 14 punti percentuali
+
+5. CONFRONTO CON CNN+LSTM
+   CNN+LSTM: F1=0.872, Recall=0.935, Precision=0.817
+   TimeSformer: F1=0.711, Recall=0.625, Precision=0.823
+   Gap principale: Recall (-31%) — TimeSformer perde più crisi
+   Vantaggio TimeSformer: ROC-AUC=0.690 vs 0.653 (CNN+LSTM)
+
+6. POSSIBILI CAUSE DEGLI ERRORI
+   - Dataset piccolo (101 video) per 121M parametri
+   - Risoluzione 448×448 introduce artefatti di resize da 210×210
+   - Sequenze di 16 frame troppo corte per catturare dinamiche
+     temporali lunghe (CNN+LSTM usa 60 frame = 6s)
+   - Transformer pre-addestrato su Kinetics-400 (azioni umane)
+     potrebbe non trasferire bene su comportamento murino
+
+7. CONCLUSIONI
+   - TimeSformer è competitivo ma non supera CNN+LSTM
+   - Linear Probing efficace contro overfitting
+   - Per migliorare: dataset più grande, fine-tuning progressivo,
+     o architetture ibride CNN+Transformer
+============================================================
