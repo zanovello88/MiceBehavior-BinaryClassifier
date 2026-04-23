@@ -443,7 +443,7 @@ Entrambe le build includono il modello CNN+LSTM e tutte le dipendenze.
 
 Questa tesi si basa su e contribuisce a:
 
-- **Dataset**: 101 video annotati di crisi epilettiche in topi (laboratorio di neuroscienze, UniPD)
+- **Dataset**: 101 video annotati di crisi epilettiche in topi
 - **GUI distribuita**: Applicazione standalone per uso clinico (PyInstaller, cross-platform)
 - **Codice open-source**: Repository GitHub con pipeline completa preprocessing → training → deployment
 
