@@ -200,8 +200,20 @@ def main():
     log.info("Architettura — parametri:")
     count_parameters(model)
 
-    # Loss, ottimizzatore, scheduler 
-    pos_weight = torch.tensor([args.pos_weight], device=device)
+    # Loss, ottimizzatore, scheduler
+    # Calcola pos_weight dinamicamente dal training set
+    if args.pos_weight > 0:
+        pos_weight_val = args.pos_weight
+        log.info(f"pos_weight manuale: {pos_weight_val:.4f}")
+    else:
+        train_seqs = train_loader.dataset.sequences
+        n_pos = sum(s['seq_label'] == 1 for s in train_seqs)
+        n_neg = sum(s['seq_label'] == 0 for s in train_seqs)
+        pos_weight_val = n_neg / n_pos
+        log.info(f"pos_weight calcolato automaticamente: "
+                 f"{n_neg:,} neg / {n_pos:,} pos = {pos_weight_val:.4f}")
+
+    pos_weight = torch.tensor([pos_weight_val], dtype=torch.float32).to(device)
     criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     optimizer = AdamW(

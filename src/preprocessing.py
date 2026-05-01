@@ -81,11 +81,10 @@ def build_frame_labels(total_frames: int,
                        onset_frame:  int,
                        offset_frame: int,
                        frame_step:   int = FRAME_STEP) -> Dict[int, int]:
-    """
-    Restituisce {indice_frame_originale: label} per tutti i frame estratti.
-    Label 1 se il frame cade in [f_inizio, f_fine] (estremi inclusi), 0 altrimenti.
-    Lavorare sull'indice originale (30fps) garantisce coerenza con il CSV.
-    """
+    # ← NUOVO: se onset e offset sono entrambi 0, tutto è non-crisi
+    if onset_frame == 0 and offset_frame == 0:
+        return {f: 0 for f in range(0, total_frames, frame_step)}
+    
     return {
         f: (1 if onset_frame <= f <= offset_frame else 0)
         for f in range(0, total_frames, frame_step)
@@ -114,13 +113,13 @@ def process_single_video(video_path: Path,
 
     #Sanity check 
     #Verifichiamo che f_inizio e f_fine siano dentro i limiti del video.
-    f_tot_csv = int(row['f_tot'])
-    if onset < 0 or offset > f_tot_csv:
+    # Sanity check — salta se video normale (onset=offset=0)
+    if onset == 0 and offset == 0:
+        log.info(f"  [{clip_name}] video normale (no crisi), tutti label=0")
+    elif onset < 0 or offset > f_tot_csv:
         log.warning(f"  [{clip_name}] f_inizio={onset} o f_fine={offset} "
                     f"fuori dai limiti del video ({f_tot_csv} frame)")
     elif abs(f_tot_csv - total_frames) > 5:
-        #Controlla che i frame totali dichiarati nel CSV corrispondano
-        #a quelli effettivamente letti da OpenCV (tolleranza 5 frame)
         log.warning(f"  [{clip_name}] f_tot CSV={f_tot_csv} ma "
                     f"OpenCV ha letto {total_frames} frame")
     else:
