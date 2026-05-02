@@ -35,7 +35,7 @@ from model      import CNNLSTM
 from transforms import eval_transforms
 
 CROP_SIZE          = 210
-DEFAULT_CHECKPOINT = 'runs/20260327_101301/best_model.pt'
+DEFAULT_CHECKPOINT = 'runs/20260501_160105/best_model.pt'
 DEFAULT_WEIGHTS    = 'model_weights/mobilenet_v3_small_imagenet.pth'
 
 

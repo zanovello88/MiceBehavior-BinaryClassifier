@@ -76,7 +76,7 @@ def get_resource_path(relative_path):
 # Costanti
 CROP_SIZE          = 210
 DEFAULT_CHECKPOINT = get_resource_path(
-    'runs/20260327_101301/best_model.pt'
+    'runs/20260501_160105/best_model.pt'
 )
 DEFAULT_WEIGHTS = get_resource_path(
     'model_weights/mobilenet_v3_small_imagenet.pth'

@@ -22,7 +22,7 @@ added_files = [
 
     # checkpoint del modello addestrato
     (str(ROOT / 'runs' / '20260327_101301' / 'best_model.pt'),
-     'runs/20260327_101301'),
+     'runs/20260501_160105'),
 ]
 
 # Analisi del codice sorgente
